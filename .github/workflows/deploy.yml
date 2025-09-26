@@ -24,7 +24,7 @@ jobs:
       - name: Log in to Botpress
         env:
           BOTPRESS_TOKEN: ${{ secrets.BOTPRESS_TOKEN }}
-        run: bp login --token "$BOTPRESS_TOKEN"
+        run: bp login --token "$BOTPRESS_TOKEN" --workspace "wkspace_01K5S2SMCHM6WYBSX3MW9ZBWFJ"
 
       - name: Install dependencies
         run: npm ci
@@ -33,6 +33,6 @@ jobs:
         run: bp build
 
       - name: Deploy the bot (create if missing)
-        run: bp deploy --create-new-bot
+        run: bp deploy --create-new-bot --workspace "wkspace_01K5S2SMCHM6WYBSX3MW9ZBWFJ"
 
 
