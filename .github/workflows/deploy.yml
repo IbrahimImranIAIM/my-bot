@@ -1,0 +1,38 @@
+name: Deploy Botpress Bot
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Botpress CLI
+        run: npm install -g @botpress/cli
+
+      - name: Log in to Botpress
+        env:
+          BOTPRESS_TOKEN: ${{ secrets.BOTPRESS_TOKEN }}
+        run: bp login --token "$BOTPRESS_TOKEN"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the bot
+        run: bp build
+
+      - name: Deploy the bot (create if missing)
+        run: bp deploy --create-new-bot
+
+
