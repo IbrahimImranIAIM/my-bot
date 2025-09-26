@@ -33,6 +33,6 @@ jobs:
         run: bp build
 
       - name: Deploy the bot (create if missing)
-        run: bp deploy --create-new-bot --workspaceId "wkspace_01K5S2SMCHM6WYBSX3MW9ZBWFJ"
+        run: bp deploy --create-new-bot --confirm --workspaceId "wkspace_01K5S2SMCHM6WYBSX3MW9ZBWFJ"
 
 
