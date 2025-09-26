@@ -30,7 +30,7 @@ bot.on.message("*", async (props) => {
     tags: {},
     type: "text",
     payload: {
-      text: `You said: ${props.message.payload.text}`,
+      text: `You said (and this is my new commit): ${props.message.payload.text}`,
     },
   });
 });
