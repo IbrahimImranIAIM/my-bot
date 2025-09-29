@@ -18,14 +18,12 @@ jobs:
 
       - name: Install deps
         run: npm ci
-        working-directory: my-bot
 
       - name: Install Botpress CLI
         run: npm i -g @botpress/cli
 
       - name: Deploy
         run: botpress deploy --path .
-        working-directory: my-bot
         env:
           BOTPRESS_TOKEN: ${{ secrets.BOTPRESS_TOKEN }}
           BOTPRESS_WORKSPACE_ID: ${{ secrets.BOTPRESS_WORKSPACE_ID }}
