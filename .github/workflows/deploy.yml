@@ -8,15 +8,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install deps
+      - name: Install dependencies
         run: npm ci
 
       - name: Install Botpress CLI
@@ -31,8 +31,8 @@ jobs:
       - name: Build
         run: bp build
 
-      - name: Deploy
-        run: bp deploy --confirm
+      - name: Deploy to existing bot
+        run: bp deploy --confirm --workspaceId "$BOTPRESS_WORKSPACE_ID" --botId "43ac4500-8cf8-42ae-b7c4-20de752c6e38"
         env:
           BOTPRESS_TOKEN: ${{ secrets.BOTPRESS_TOKEN }}
           BOTPRESS_WORKSPACE_ID: ${{ secrets.BOTPRESS_WORKSPACE_ID }}
