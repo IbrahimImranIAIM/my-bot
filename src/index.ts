@@ -28,24 +28,13 @@ const bot = new bp.Bot({
 })
 
 
-bot.on.message("*", async (props) => {
+bot.on.message('text', async (props) => {
   const {
     conversation: { id: conversationId },
     ctx: { botId: userId },
   } = props;
 
-  if (props.message.type !== "text") {
-    await props.client.createMessage({
-      conversationId,
-      userId,
-      tags: {},
-      type: "text",
-      payload: {
-        text: "Sorry, I can only respond to text messages.",
-      },
-    });
-    return;
-  }
+  // text-only handler
 
   const userText = props.message.payload.text
 
@@ -115,5 +104,17 @@ bot.on.message("*", async (props) => {
     payload: { text: 'I dont know how to respond to that' },
   })
 });
+
+// File handler to index uploaded documents (like the example)
+bot.on.message('file', async (props) => {
+  const {
+    conversation: { id: conversationId },
+    ctx: { botId: userId },
+  } = props
+  const fileUrl = props.message.payload.fileUrl as string
+  const fileName = (fileUrl?.split('/')?.pop() as string) || `file-${Date.now()}`
+  await (props.client as any).uploadFile({ key: fileName, url: fileUrl, index: true })
+  await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: `File received and indexed: ${fileName}` } })
+})
 
 export default bot
