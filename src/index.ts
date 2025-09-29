@@ -46,8 +46,15 @@ bot.on.message('text', async (props) => {
   const userText = props.message.payload.text
 
   // Read conversation state first
-  const supportState = await (props.client as any).getState({ type: 'conversation', id: conversationId, name: 'supportFlow' })
+  const supportState = 
+  await (props.client as any).getState({ type: 'conversation', id: conversationId, name: 'supportFlow' })
   const support = (supportState?.value as any) || {}
+  // One-time SaaS greeting per conversation
+  const greetState = await (props.client as any).getState({ type: 'conversation', id: conversationId, name: 'saasGreeting' })
+  if (!(greetState?.value as any)?.greeted) {
+    await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: 'Hi! You’re chatting with SaaS Support. How can I help you today?' } })
+    await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'saasGreeting', value: { greeted: true } })
+  }
   const awaiting = support.awaitingLoginFixConfirm
   // If Autonomous Node asked to create ticket now (may have stored email/problem)
   if (support.createNow) {
