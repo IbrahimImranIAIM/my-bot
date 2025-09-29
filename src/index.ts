@@ -20,6 +20,7 @@ const KNOWLEDGE_BASE: QaItem[] = [
   { question: 'Common troubleshooting steps', answer: 'Refresh page, clear cache, try another browser, check status page.', tags: ['issues'] },
   { question: 'Where can I see system status?', answer: 'Check our status page for ongoing incidents.', tags: ['features','status'] },
 ]
+//check commit
 const normalize = (t: string) => t.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean)
 function retrieveAnswer(query: string): { item: QaItem | null; score: number } {
   const q = normalize(query)
