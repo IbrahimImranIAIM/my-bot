@@ -11,13 +11,15 @@ const bot = new bp.Bot({
       }
       const endpoint = process.env.SUPPORT_API_ENDPOINT || 'https://iaimwork.free.beeceptor.com/'
       try {
-        await fetch(endpoint, {
+        console.info('[ticket] POST', endpoint, body)
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         })
+        console.info('[ticket] response', res.status, res.statusText)
       } catch (_e) {
-        // ignore network errors in mock
+        console.error('[ticket] POST failed', _e)
       }
       const ticketId = 'TICKET-' + Math.random().toString(36).substr(2, 9)
       return { ticketId }
