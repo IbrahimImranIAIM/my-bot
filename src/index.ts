@@ -82,6 +82,21 @@ bot.on.message('text', async (props) => {
   const supportState = 
   await (props.client as any).getState({ type: 'conversation', id: conversationId, name: 'supportFlow' })
   const support = (supportState?.value as any) || {}
+  // Hard-coded command path: if we're waiting only for an email to create a ticket now
+  if (support.awaitingEmailOnly) {
+    const emailMatch = (userText || '').match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)
+    if (!emailMatch) {
+      await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: 'Please provide a valid email (e.g., me@example.com) to create your ticket.' } })
+      return
+    }
+    const userEmail = emailMatch[0]
+    const userName = 'User'
+    const problemDescription = 'User requested ticket via "create a ticket" command.'
+    const { ticketId } = await (bot as any).actions['create-support-ticket']({}, { userName, userEmail, problemDescription })
+    await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: `Thanks! Ticket ${ticketId} has been created. Our team will reach out to ${userEmail} shortly.` } })
+    await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'supportFlow', value: {} })
+    return
+  }
   // One-time SaaS greeting per conversation
   const greetState = await (props.client as any).getState({ type: 'conversation', id: conversationId, name: 'saasGreeting' })
   if (!(greetState?.value as any)?.greeted) {
@@ -157,15 +172,21 @@ bot.on.message('text', async (props) => {
       const { ticketId } = await (bot as any).actions['create-support-ticket']({}, { userName, userEmail, problemDescription })
       await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: `Thank you. I've created ticket ${ticketId} for you. Our team will be in touch shortly.` } })
     } else {
-      await (props.client as any).createMessage({
-        conversationId,
-        userId,
-        tags: {},
-        type: 'text',
-        payload: {
-          text: 'To create a ticket in one step, please send your email followed by a brief description, for example: me@example.com App crashes on login.',
-        },
-      })
+      // If user typed exactly the shortcut phrase, switch to email-only capture (hard-coded one-liner flow)
+      if (/^\s*create\s+a\s+ticket\s*$/i.test(userText)) {
+        await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'supportFlow', value: { awaitingEmailOnly: true } })
+        await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: 'Please provide your email to create the ticket.' } })
+      } else {
+        await (props.client as any).createMessage({
+      conversationId,
+      userId,
+      tags: {},
+          type: 'text',
+      payload: {
+            text: 'To create a ticket now, send your email followed by a brief description, e.g., me@example.com App crashes on login.',
+          },
+        })
+      }
     }
     return
   }
