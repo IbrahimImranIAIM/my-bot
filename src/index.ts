@@ -40,7 +40,21 @@ bot.on.message('text', async (props) => {
 
   // Read conversation state first
   const supportState = await (props.client as any).getState({ type: 'conversation', id: conversationId, name: 'supportFlow' })
-  const awaiting = (supportState?.value as any)?.awaitingLoginFixConfirm
+  const support = (supportState?.value as any) || {}
+  const awaiting = support.awaitingLoginFixConfirm
+  // If Autonomous Node asked to create ticket now (may have stored email/problem)
+  if (support.createNow) {
+    const emailFromState = typeof support.email === 'string' ? support.email : ''
+    const problemFromState = typeof support.problem === 'string' ? support.problem : ''
+    const emailMatch = (emailFromState || userText).match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)
+    const userEmail = emailMatch ? emailMatch[0] : ''
+    const problemDescription = (problemFromState || userText.replace(userEmail, '').trim() || 'Login issue persists after troubleshooting.')
+    const userName = 'User'
+    const { ticketId } = await (bot as any).actions['create-support-ticket']({}, { userName, userEmail, problemDescription })
+    await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: `Thank you. I've created ticket ${ticketId} for you. Our team will be in touch shortly.` } })
+    await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'supportFlow', value: {} })
+    return
+  }
   if (awaiting) {
     const negative = /\b(no|not\s*yet|didn'?t|doesn'?t\s*work)\b/i.test(userText)
     const positive = /\b(yes|fixed|works|resolved)\b/i.test(userText)
@@ -58,7 +72,7 @@ bot.on.message('text', async (props) => {
     return
   }
 
-  const awaitingTicket = (supportState?.value as any)?.awaitingTicketInfo
+  const awaitingTicket = support.awaitingTicketInfo
   if (awaitingTicket) {
     const emailMatch = userText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)
     const userEmail = emailMatch ? emailMatch[0] : ''
