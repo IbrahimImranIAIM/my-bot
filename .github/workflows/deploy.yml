@@ -2,6 +2,39 @@ name: Deploy Botpress Bot
 
 on:
   push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: npm ci
+        working-directory: my-bot
+
+      - name: Install Botpress CLI
+        run: npm i -g @botpress/cli
+
+      - name: Deploy
+        run: botpress deploy --path .
+        working-directory: my-bot
+        env:
+          BOTPRESS_TOKEN: ${{ secrets.BOTPRESS_TOKEN }}
+          BOTPRESS_WORKSPACE_ID: ${{ secrets.BOTPRESS_WORKSPACE_ID }}
+          SUPPORT_API_ENDPOINT: ${{ secrets.SUPPORT_API_ENDPOINT }}
+
+name: Deploy Botpress Bot
+
+on:
+  push:
     branches:
       - main
 

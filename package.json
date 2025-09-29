@@ -1,7 +1,8 @@
 {
   "name": "@bp-templates/empty-bot",
   "scripts": {
-    "check:type": "tsc --noEmit"
+    "check:type": "tsc --noEmit",
+    "deploy": "botpress deploy --path ."
   },
   "private": true,
   "dependencies": {
