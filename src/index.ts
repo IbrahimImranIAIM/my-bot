@@ -103,8 +103,30 @@ bot.on.message('text', async (props) => {
 
   // If user explicitly asks to create a ticket outside of the login flow
   if (/(create|open|raise)\s+(a\s+)?(support\s+)?(ticket|case)/i.test(userText)) {
-    await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: 'Sure — what is your email address and a brief description of the problem?' } })
-    await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'supportFlow', value: { awaitingTicketInfo: true } })
+    const emailMatch = userText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)
+    const userEmail = emailMatch ? emailMatch[0] : ''
+    const cleaned = userText
+      .replace(/(please|kindly)\s*/gi, '')
+      .replace(/(create|open|raise)\s+(a\s+)?(support\s+)?(ticket|case)/gi, '')
+      .replace(userEmail, '')
+      .trim()
+    const problemDescription = cleaned || 'No description provided.'
+
+    if (userEmail) {
+      const userName = 'User'
+      const { ticketId } = await (bot as any).actions['create-support-ticket']({}, { userName, userEmail, problemDescription })
+      await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: `Thank you. I've created ticket ${ticketId} for you. Our team will be in touch shortly.` } })
+    } else {
+      await (props.client as any).createMessage({
+        conversationId,
+        userId,
+        tags: {},
+        type: 'text',
+        payload: {
+          text: 'To create a ticket in one step, please send your email followed by a brief description, for example: me@example.com App crashes on login.',
+        },
+      })
+    }
     return
   }
 
