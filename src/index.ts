@@ -9,7 +9,7 @@ const bot = new bp.Bot({
         email: input.userEmail,
         problem: input.problemDescription,
       }
-      const endpoint = process.env.SUPPORT_API_ENDPOINT || 'https://iaimwork.free.beeceptor.com'
+      const endpoint = process.env.SUPPORT_API_ENDPOINT || 'https://iaimwork.free.beeceptor.com/'
       try {
         await fetch(endpoint, {
           method: 'POST',
