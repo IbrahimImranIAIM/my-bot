@@ -47,39 +47,7 @@ bot.on.message("*", async (props) => {
 
   const userText = props.message.payload.text
 
-  // If user explicitly asks to create a ticket at any time (prioritize over KB)
-  if (/(create|open|raise)\s+(a\s+)?(support\s+)?(ticket|case)/i.test(userText)) {
-    await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: 'Sure — what is your email address and a brief description of the problem?' } })
-    await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'supportFlow', value: { awaitingTicketInfo: true } })
-    return
-  }
-
-  // First, try KB retrieval
-  const { item, score } = retrieveAnswer(userText)
-  if (item && score >= 0.25) {
-    await props.client.createMessage({
-      conversationId,
-      userId,
-      tags: {},
-      type: 'text',
-      payload: { text: item.answer },
-    })
-    return
-  }
-
-  // Multi-step login support flow
-  if (/\b(i\s*can'?t\s*log\s*in|login\s*issue|log\s*in\s*problem)\b/i.test(userText)) {
-    await (props.client as any).createMessage({
-      conversationId,
-      userId,
-      tags: {},
-      type: 'text',
-      payload: { text: 'Troubleshooting: 1) Check email/password 2) Reset password 3) Clear cache/incognito 4) Verify 2FA time sync. Did any of those steps solve your problem?' },
-    })
-    await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'supportFlow', value: { awaitingLoginFixConfirm: true } })
-    return
-  }
-
+  // Read conversation state first
   const supportState = await (props.client as any).getState({ type: 'conversation', id: conversationId, name: 'supportFlow' })
   const awaiting = (supportState?.value as any)?.awaitingLoginFixConfirm
   if (awaiting) {
@@ -108,6 +76,30 @@ bot.on.message("*", async (props) => {
     const { ticketId } = await (bot as any).actions['create-support-ticket']({}, { userName, userEmail, problemDescription })
     await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: `Thank you. I've created ticket ${ticketId} for you. Our team will be in touch shortly.` } })
     await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'supportFlow', value: {} })
+    return
+  }
+
+  // Login issue new turn: search KB and send troubleshooting steps, then ask confirmation
+  if (/\b(i\s*can'?t\s*log\s*in|login\s*issue|log\s*in\s*problem)\b/i.test(userText)) {
+    const kb = retrieveAnswer('login issue')
+    const troubleshooting = kb.item?.answer || 'Troubleshooting: 1) Check email/password 2) Reset password 3) Clear cache/incognito 4) Verify 2FA time sync.'
+    await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: troubleshooting } })
+    await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: 'Did any of those steps solve your problem?' } })
+    await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'supportFlow', value: { awaitingLoginFixConfirm: true } })
+    return
+  }
+
+  // If user explicitly asks to create a ticket outside of the login flow
+  if (/(create|open|raise)\s+(a\s+)?(support\s+)?(ticket|case)/i.test(userText)) {
+    await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: 'Sure — what is your email address and a brief description of the problem?' } })
+    await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'supportFlow', value: { awaitingTicketInfo: true } })
+    return
+  }
+
+  // General KB retrieval last
+  const { item, score } = retrieveAnswer(userText)
+  if (item && score >= 0.25) {
+    await props.client.createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: item.answer } })
     return
   }
 
