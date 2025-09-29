@@ -1,28 +1,35 @@
 import * as bp from '.botpress'
 import { retrieveAnswer } from './kb'
 
+async function createSupportTicketImpl(input: { userName: string; userEmail: string; problemDescription: string }) {
+  const body = {
+    name: input.userName,
+    email: input.userEmail,
+    problem: input.problemDescription,
+  }
+  const endpoint = process.env.SUPPORT_API_ENDPOINT || 'https://iaimwork.free.beeceptor.com/'
+  try {
+    console.info('[ticket] POST', endpoint, body)
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    console.info('[ticket] response', res.status, res.statusText)
+  } catch (_e) {
+    console.error('[ticket] POST failed', _e)
+  }
+  const ticketId = 'TICKET-' + Math.random().toString(36).substr(2, 9)
+  return { ticketId }
+}
+
 const bot = new bp.Bot({
   actions: {
     async 'create-support-ticket'(_ctx: any, input: { userName: string; userEmail: string; problemDescription: string }) {
-      const body = {
-        name: input.userName,
-        email: input.userEmail,
-        problem: input.problemDescription,
-      }
-      const endpoint = process.env.SUPPORT_API_ENDPOINT || 'https://iaimwork.free.beeceptor.com/'
-      try {
-        console.info('[ticket] POST', endpoint, body)
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        })
-        console.info('[ticket] response', res.status, res.statusText)
-      } catch (_e) {
-        console.error('[ticket] POST failed', _e)
-      }
-      const ticketId = 'TICKET-' + Math.random().toString(36).substr(2, 9)
-      return { ticketId }
+      return await createSupportTicketImpl(input)
+    },
+    async createSupportTicket(_ctx: any, input: { userName: string; userEmail: string; problemDescription: string }) {
+      return await createSupportTicketImpl(input)
     },
   },
 })
