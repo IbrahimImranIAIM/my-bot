@@ -22,8 +22,17 @@ jobs:
       - name: Install Botpress CLI
         run: npm i -g @botpress/cli
 
+      - name: Login to Botpress
+        run: bp login --token "$BOTPRESS_TOKEN" --workspaceId "$BOTPRESS_WORKSPACE_ID"
+        env:
+          BOTPRESS_TOKEN: ${{ secrets.BOTPRESS_TOKEN }}
+          BOTPRESS_WORKSPACE_ID: ${{ secrets.BOTPRESS_WORKSPACE_ID }}
+
+      - name: Build
+        run: bp build
+
       - name: Deploy
-        run: botpress deploy --path .
+        run: bp deploy --confirm
         env:
           BOTPRESS_TOKEN: ${{ secrets.BOTPRESS_TOKEN }}
           BOTPRESS_WORKSPACE_ID: ${{ secrets.BOTPRESS_WORKSPACE_ID }}
