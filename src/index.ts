@@ -104,6 +104,13 @@ bot.on.message("*", async (props) => {
     return
   }
 
+  // If user explicitly asks to create a ticket at any time
+  if (/\b(create|open|raise)\b.*\b(ticket|case)\b/i.test(userText)) {
+    await (props.client as any).createMessage({ conversationId, userId, tags: {}, type: 'text', payload: { text: 'Sure — what is your email address and a brief description of the problem?' } })
+    await (props.client as any).setState({ type: 'conversation', id: conversationId, name: 'supportFlow', value: { awaitingTicketInfo: true } })
+    return
+  }
+
   await props.client.createMessage({
     conversationId,
     userId,
