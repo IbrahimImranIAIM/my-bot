@@ -31,10 +31,20 @@ jobs:
       - name: Build
         run: bp build
 
-      - name: Deploy to existing bot
-        run: bp deploy --confirm --workspaceId "$BOTPRESS_WORKSPACE_ID" --botId "43ac4500-8cf8-42ae-b7c4-20de752c6e38"
+      - name: Create or update bot
+        run: |
+          if [ -z "$BOTPRESS_BOT_ID" ]; then
+            echo "No botId provided, creating a new bot..."
+            NEW_ID=$(bp bots create --name "SaaS Support $(date +%s)" --workspaceId "$BOTPRESS_WORKSPACE_ID" --json | jq -r '.id')
+            echo "Created bot: $NEW_ID"
+            echo "BOTPRESS_BOT_ID=$NEW_ID" >> $GITHUB_ENV
+          else
+            echo "Using existing botId: $BOTPRESS_BOT_ID"
+          fi
+          bp deploy --confirm --workspaceId "$BOTPRESS_WORKSPACE_ID" --botId "${BOTPRESS_BOT_ID:-$NEW_ID}"
         env:
           BOTPRESS_TOKEN: ${{ secrets.BOTPRESS_TOKEN }}
           BOTPRESS_WORKSPACE_ID: ${{ secrets.BOTPRESS_WORKSPACE_ID }}
+          BOTPRESS_BOT_ID: ${{ secrets.BOTPRESS_BOT_ID }}
           SUPPORT_API_ENDPOINT: ${{ secrets.SUPPORT_API_ENDPOINT }}
 
